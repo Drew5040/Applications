@@ -1,4 +1,4 @@
-# Data Steward Clipboard Manager*
+# Data Steward Clipboard Manager
 
 ## Overview
 
