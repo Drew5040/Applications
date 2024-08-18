@@ -6,26 +6,33 @@ from pyperclip import paste
 def check_clipboard(app):
     # Continuously check clipboard for changes
     debug("Entered check_clipboard loop")
+
     while app.running:
         try:
             # Get current clipboard content
             app.current_clipboard = paste().strip()
             debug(f"Current clipboard content: {app.current_clipboard}")
-            # Check clipboard content is not master id being processed, not just whitespace, and is new
+
+            # Check clipboard content is not 'master_id', not just whitespace, & is new
             if app.current_clipboard != app.master_id.strip() and app.current_clipboard.strip() and \
                     app.current_clipboard != app.previous_clipboard:
                 info(f"New clipboard content detected: {app.current_clipboard}")
+
+                # Process 'master_id' with current clipboard content as 'unique_id'
                 app.process_master_id(unique_id=app.current_clipboard.strip())
-                # Update previous clipboard content
+
+                # Update 'previous_clipboard' content
                 app.previous_clipboard = app.current_clipboard
+
+        # Handle exceptions during clipboard checking
         except Exception as e:
             error(f"Error checking clipboard: {e}")
-        # Sleep for 100 milliseconds
+
+        # Sleep for 100 milliseconds before rechecking
         sleep(0.1)
 
-    # Functionality for processing & combining copied master id's
 
-
+# Functionality for processing & combining copied 'master_id's
 def process_master_id(app, unique_id):
     debug(f"process_identifier called with unique_id: {unique_id}")
     # Delay to ensure file accessibility

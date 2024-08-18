@@ -1,22 +1,25 @@
-from logging import info, basicConfig, DEBUG
+from os import path
+from sys import exit
+from logging import info, basicConfig, DEBUG, INFO
 from datetime import datetime
 from gui import setup_gui
-from styles import widget_styling
+from styles import style_gui
 from ttkthemes import ThemedTk
 from states import (
     start_listening, stop_listening, undo_last_action,
     redo_last_action, restore_state, save_current_state,
-    update_button_states, save_text_display_state, load_text_display_state,
-    save_stacks_state, load_stacks_state
+    update_button_states, save_application_state, load_application_state,
+    save_stack_states, load_stack_states, get_app_data_dir
 )
 from clipboard import check_clipboard, process_master_id
 from append import (
     append_new_master_id, append_split_candidate,
-    append_merge_candidate, append_to_file
+    append_merge_candidate, append_to_file, append_note
 )
 from update import (
     update_text_display, update_directory_label, update_counter_label,
-    display_current_directory, set_working_directory, set_master_id
+    display_current_directory, set_working_directory, set_master_id,
+    open_file
 )
 
 
@@ -27,10 +30,14 @@ class App:
         # Root window for the GUI
         self.root = root
 
-        # Set the custom icon for the window
-        self.root.iconbitmap("favicon.ico")
+        # Set title of root window
+        self.root.title("Data Steward Clipboard Manager")
 
-        # Flag to control the while loop in the separate thread
+        # Set custom icon for GUI
+        icon_path = path.join(path.dirname(__file__), "favicon.ico")
+        self.root.iconbitmap(icon_path)
+
+        # Flag to control loop in the separate thread
         self.running = False
         # Master ID set by user
         self.master_id = None
@@ -45,7 +52,7 @@ class App:
         # Stores the last event time
         self.last_event_time = None
         # List to store intervals between copy events
-        self.intervals = []
+        self.note = None
         # Set to store unique master IDs
         self.unique_master_ids = set()
         # Counter for unique master IDs
@@ -54,24 +61,26 @@ class App:
         self.undo_stack = []
         # Redo functionality stack
         self.redo_stack = []
-
         # Define filepath
+        self.filepath = None
+
+        # Create file name
         current_time = datetime.now()
         formatted_time = current_time.strftime("%Y.%m.%d")
         self.filepath = f"{formatted_time}.approvals.txt"
 
         # Set up the GUI components
-        setup_gui(self)
-        widget_styling(self)
-        load_text_display_state(self)
-        load_stacks_state(self)
+        if not path.isfile(self.filepath):
+            setup_gui(self)
+            style_gui(self)
+        else:
+            setup_gui(self)
+            style_gui(self)
+            load_application_state(self)
+            load_stack_states(self)
 
-    # Close application gracefully
-    def close(self):
-        save_text_display_state(self)
-        save_stacks_state(self)
-        self.running = False
-        self.root.quit()
+
+
 
     ## Methods for state management ##
     def start_listening(self):
@@ -92,6 +101,9 @@ class App:
     def update_button_states(self):
         update_button_states(self)
 
+    def append_note(self):
+        append_note(self)
+
 
     ## Methods for clipboard processing ##
     def check_clipboard(self):
@@ -100,7 +112,8 @@ class App:
     def process_master_id(self, unique_id):
         process_master_id(self, unique_id)
 
-    # Methods for appending entries
+
+    ## Methods for appending entries ##
     def append_new_master_id(self):
         append_new_master_id(self)
 
@@ -113,7 +126,8 @@ class App:
     def append_to_file(self, text, section):
         append_to_file(self, text, section)
 
-    # Methods for updating GUI
+
+    ## Methods for updating GUI ##
     def update_text_display(self, text):
         update_text_display(self, text)
 
@@ -133,14 +147,48 @@ class App:
         set_master_id(self)
 
 
-if __name__ == "__main__":
-    # Setup logging
-    basicConfig(level=DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    # Close application gracefully
+    def close(self):
+        if path.isfile(self.filepath):
+            info("app closing, file exists")
+            save_application_state(self)
+            save_stack_states(self)
+            self.running = False
+            self.root.quit()
+            self.root.destroy()
+        else:
+            info("app closing, file does not exist")
+            self.running = False
+            self.root.quit()
+            self.root.destroy()
+
+# Main function for application entry into 'mainloop()'
+def main():
+    try:
+        app_data_dir = get_app_data_dir()
+    except RuntimeError as e:
+        # Handle unsupported OS error
+        error(f"Application cannot run: {e}")
+        messagebox.showerror("Unsupported OS", f"Your operating system is not supported: {system()}")
+        # Exit application gracefully
+        exit(1)
+
     # Create main window with stated theme
     root = ThemedTk(theme="vista")
+
     # Create app
     app = App(root=root)
+
     # Handle window close event
     root.protocol(name="WM_DELETE_WINDOW", func=app.close)
+
     # Run main loop
     root.mainloop()
+
+
+if __name__ == "__main__":
+    # Setup logging
+    basicConfig(level=INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    # Run the application
+    main()
+

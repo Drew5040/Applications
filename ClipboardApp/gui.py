@@ -1,10 +1,11 @@
 from tkinter import ttk, Text, DISABLED
 from context_menu import create_context_menu, highlight_text, bind_context_menu
+from update import display_current_directory, open_file
 
 
 # Set initial window size of GUI & make it fixed
 def set_window_size(app):
-    app.root.geometry("544x670")
+    app.root.geometry("544x792")
     app.root.resizable(False, False)
 
 
@@ -126,11 +127,23 @@ def undo_and_redo_buttons(app):
     app.undo_button.grid(row=0, column=1, padx=10)
 
 
-# Create & place text display
-def text_display(app):
-    app.text_display = Text(master=app.root, height=10, width=60, undo=True)
-    app.text_display.grid(row=8, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+# Create & place ID display
+def id_display(app):
+    app.text_display = Text(master=app.root, height=5, width=30, undo=True)
+    app.text_display.grid(row=9, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
     app.text_display.tag_configure(tagName="center", justify="center")
+
+
+# Create & place note display with a Label
+def note_display(app):
+    app.note_label = ttk.Label(master=app.root, text="Notes:")
+    app.note_label.grid(row=10, column=0, columnspan=3, padx=10, pady=(10, 0), sticky="w")
+
+    app.note_display = Text(master=app.root, height=8, width=30, undo=True)
+    app.note_display.grid(row=11, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+    # app.note_display.tag_configure(tagName="center", justify="center")
+    app.append_note_button = ttk.Button(master=app.root, text="append_note", command=app.append_note)
+    app.append_note_button.grid(row=10, column=1, columnspan=3, padx=10, sticky="e")
 
 
 # Create & place set working directory button
@@ -138,13 +151,20 @@ def set_working_directory_button(app):
     app.dir_button = ttk.Button(
         master=app.root, text="Change Working Directory", command=app.set_working_directory
     )
-    app.dir_button.grid(row=9, column=0, columnspan=3, pady=10)
+    app.dir_button.grid(row=12, column=0, columnspan=3, pady=10)
+
+
+def open_file_button(app):
+    app.open_file_button = ttk.Button(
+        master=app.root, text="Open File", command=open_file
+    )
+    app.open_file_button.grid(row=13, column=0, columnspan=3, pady=10)
 
 
 # Create & place working directory label
 def working_directory_label(app):
-    app.dir_label = ttk.Label(master=app.root, text=app.display_current_directory(), style="Custom.TLabel")
-    app.dir_label.grid(row=10, column=0, columnspan=3, padx=20, pady=10)
+    app.dir_label = ttk.Label(master=app.root, text=display_current_directory(app), style="Custom.TLabel")
+    app.dir_label.grid(row=14, column=0, columnspan=3, padx=20, pady=10)
 
 
 # Initialize GUI components
@@ -158,8 +178,10 @@ def setup_gui(app):
     thread_status_label(app)
     unique_master_id_label(app)
     undo_and_redo_buttons(app)
-    text_display(app)
+    id_display(app)
+    note_display(app)
     set_working_directory_button(app)
+    open_file_button(app)
     working_directory_label(app)
 
     # Bind context menu's to Entry widgets
@@ -167,7 +189,8 @@ def setup_gui(app):
         app.master_id_entry,
         app.new_master_id_entry,
         app.split_candidate_entry,
-        app.merge_candidate_entry
+        app.merge_candidate_entry,
+        app.note_display,
     ]
 
     bind_context_menu(app.root, widgets)

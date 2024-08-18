@@ -1,5 +1,6 @@
 from os import path
 from logging import info, warning, debug, error
+from traceback import format_exc
 from time import sleep
 from datetime import datetime
 from states import save_current_state
@@ -8,74 +9,101 @@ from tkinter import messagebox, END
 
 # Initialize file
 def initialize_file(filepath):
+    # Check if 'filepath' exists & initialize if not
     if not path.exists(filepath):
-        initial_state = ["\nAPPROVALS\n\n\n", "NEW_MASTERS\n\n\n", "SPLIT\n\n\n", "MERGE\n\n"]
-        # Open file & record initial state
+        # Define 'initial_state' with headers
+        initial_state = ["\nAPPROVALS\n\n\n", "NEW_MASTERS\n\n\n", "SPLIT\n\n\n", "MERGE\n\n\n", "NOTES\n\n"]
+
+        # Open 'filepath' & write 'initial_state' to file
         with open(file=filepath, mode="w") as file:
             file.writelines(initial_state)
+
+        # Return 'initial_state'
         return initial_state
     else:
+        # Read & return existing file content
         with open(file=filepath, mode="r") as file:
             return file.readlines()
 
 
-# Functionality for processing & combining copied master id's
-def process_master_id(app, unique_id):
-    debug(f"process_identifier called with unique_id: {unique_id}")
-    # Delay to ensure file accessibility
-    sleep(0.1)
-    try:
-        # Combine master ID with unique ID & append to file
-        combined_id = f"{app.master_id} ({unique_id})"
-        info(f"Processing identifier: {combined_id}")
-
-        # Append combined ids
-        app.append_to_file(text=combined_id, section="APPROVALS")
-
-        # Check if master ID is unique & update unique id counter
-        if app.master_id not in app.unique_master_ids:
-            app.unique_master_ids.add(app.master_id)
-            app.master_id_counter += 1
-            app.update_counter_label()
-
-    except Exception as e:
-        error(f"Error processing identifier: {e}")
-
-
-# Grab, check, strip, & append new master ID to file
+# Grab, check, strip, & append 'new_master_id' to file
 def append_new_master_id(app):
+    # Get 'new_master_id' from entry field & strip whitespace
     app.new_master_id = app.new_master_id_entry.get().strip()
+
+    # Check if 'new_master_id' is empty & show warning if needed
     if not app.new_master_id:
         messagebox.showwarning("No new Master ID", "Please enter a new Master ID")
         warning("No new Master ID entered")
     else:
+        # Append 'new_master_id' to file under 'NEW_MASTERS' section
         app.append_to_file(text=app.new_master_id, section="NEW_MASTERS")
+
+        # Clear 'new_master_id_entry' after appending
         app.new_master_id_entry.delete(first=0, last=END)
+
+        # Log that new 'new_master_id' was recorded
         info(f"New Master ID recorded: {app.new_master_id}")
 
 
-# Grab, check, strip, & append split candidate to file. Then, clear entry
+# Grab, check, strip, & append 'split_candidate' to file, then clear entry
 def append_split_candidate(app):
+    # Get 'split_candidate' from entry field & strip whitespace
     app.split_candidate = app.split_candidate_entry.get().strip()
+
+    # Check if 'split_candidate' is empty & show warning if needed
     if not app.split_candidate:
         messagebox.showwarning("No new Split Candidate", "Please enter a new Split Candidate")
         warning("No new Split Candidate entered")
     else:
+        # Append 'split_candidate' to file under 'SPLIT' section
         app.append_to_file(text=app.split_candidate, section="SPLIT")
+
+        # Clear 'split_candidate_entry' after appending
         app.split_candidate_entry.delete(first=0, last=END)
-        info(f"New Master ID recorded: {app.split_candidate}")
+
+        # Log that new 'split_candidate' was recorded
+        info(f"New Split Candidate recorded: {app.split_candidate}")
 
 
-#  Grab, check, strip, & append merge candidate to file. Then clear entry
+# Grab, check, strip, & append 'merge_candidate' to file, then clear entry
 def append_merge_candidate(app):
+    # Get 'merge_candidate' from entry field & strip whitespace
     app.merge_candidate = app.merge_candidate_entry.get().strip()
+
+    # Check if 'merge_candidate' is empty & show warning if needed
     if not app.merge_candidate:
         messagebox.showwarning("No new Merge Candidate", "Please enter a new Merge Candidate")
         warning("No new Merge Candidate entered")
     else:
+        # Append 'merge_candidate' to file under 'MERGE' section
         app.append_to_file(text=app.merge_candidate, section="MERGE")
+
+        # Clear 'merge_candidate_entry' after appending
         app.merge_candidate_entry.delete(first=0, last=END)
+
+        # Log that new 'merge_candidate' was recorded
         info(f"New Merge Candidate recorded: {app.merge_candidate}")
+
+
+# Grab, check, strip, & append 'notes' to file. Then clear entry
+def append_note(app):
+    # Get notes from the 'note_display' Text widget
+    notes = app.note_display.get("1.0", END).strip()
+
+    # Check if notes are empty & show warning if needed
+    if not notes:
+        messagebox.showwarning("No Note", "Please enter a note before appending.")
+        warning("No note entered")
+    else:
+        # Append notes to file under 'NOTES' section
+        app.append_to_file(text=notes, section="NOTES")
+
+        # Clear 'note_display' after appending
+        app.note_display.delete("1.0", END)
+
+        # Log that notes were recorded & appended
+        info("Notes recorded and appended to file")
 
 
 # Initialize file & append processed ID's under their appropriate headers
@@ -85,24 +113,24 @@ def append_to_file(app, text, section):
     formatted_time = current_time.strftime("%Y.%m.%d")
     app.filepath = f"{formatted_time}.approvals.txt"
 
-    # Initialize file & save initial state if undo_stack is empty
-    if not app.undo_stack:
-        initial_file_state = initialize_file(app.filepath)
-        app.undo_stack.append(initial_file_state)
+    # Check if file exists & initialize if not
+    if not path.exists(app.filepath):
+        initial_state = initialize_file(app.filepath)
+        app.undo_stack.append(initial_state)
 
     try:
-        # Save current file & display state to undo stack
+        # Save current file & display state to 'undo_stack'
         current_state = save_current_state(app, app.filepath)
         app.undo_stack.append(current_state)
 
-        # Clear the redo stack because a new action was taken
+        # Clear 'redo_stack' since a new action was taken
         app.redo_stack.clear()
 
         with open(app.filepath, "r+") as file:
             # Read & process file contents
             lines = file.readlines()
 
-            # Find correct index to insert id under headers
+            # Find correct index to insert ID under headers
             if section == "APPROVALS":
                 section_index = lines.index("APPROVALS\n") + 2
                 while not lines[section_index].startswith("NEW_MASTERS"):
@@ -123,6 +151,12 @@ def append_to_file(app, text, section):
 
             elif section == "MERGE":
                 section_index = lines.index("MERGE\n") + 2
+                while not lines[section_index].startswith("NOTES"):
+                    section_index += 1
+                section_index -= 1
+
+            else:
+                section_index = lines.index("NOTES\n") + 2
 
             # Insert new entry under correct header
             lines.insert(section_index, text + "\n")
@@ -131,43 +165,20 @@ def append_to_file(app, text, section):
             file.seek(0)
             file.writelines(lines)
 
+            # Log that text was appended to file
             info(f"Appended to file: {text}")
 
         # Update text display with new ID
         app.text_display.insert(END, text + "\n", "center")
         app.text_display.see(END)
 
-    except FileNotFoundError:
-        # If file doesn't exist, initialize it
-        initial_state = initialize_file(app.filepath)
-        app.undo_stack.append((initial_state, ["\n"]))
+    # Handle file related exceptions
+    except (OSError, IOError) as e:
+        error(f"An exception occurred while appending to the file: {e}")
+        error(format_exc())
+    except Exception as e:
+        error(f"An unexpected exception occurred while appending to the file: {e}")
+        error(format_exc())
 
-        with open(app.filepath, "r+") as file:
-            # Append text to correct section
-            lines = file.readlines()
-
-            # Find line index of header
-            if section == "APPROVALS":
-                section_index = lines.index("APPROVALS\n") + 2
-            elif section == "NEW_MASTERS":
-                section_index = lines.index("NEW_MASTERS\n") + 2
-            elif section == "SPLIT":
-                section_index = lines.index("SPLIT\n") + 2
-            elif section == "MERGE":
-                section_index = lines.index("MERGE\n") + 2
-
-            # Insert new entry under correct header
-            lines.insert(section_index, text + "\n")
-
-            # Write updated content back to file
-            file.seek(0)
-            file.writelines(lines)
-
-        info(f"Created file and appended to {section}: {text}")
-
-        # Update the text display
-        app.text_display.insert(END, text + "\n", "center")
-        app.text_display.see(END)
-
-    # After appending, make sure to update button states
+    # Update button states after appending
     app.update_button_states()
