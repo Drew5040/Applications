@@ -1,7 +1,7 @@
 from tkinter import Menu, END
 
 
-# Create a context menu for 'Copy', 'Cut', & 'Paste'
+# Create a context menu for 'Copy', 'Cut', & 'Paste' functionality
 def create_context_menu(root, widget):
     # Initialize context 'menu' with 'root' as master
     menu = Menu(master=root, tearoff=0)

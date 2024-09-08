@@ -47,7 +47,7 @@ missing module named 'java.lang' - imported by platform (delayed, optional), xml
 missing module named vms_lib - imported by platform (delayed, optional)
 missing module named java - imported by platform (delayed)
 missing module named org - imported by pickle (optional)
-missing module named AppKit - imported by pyperclip (delayed, conditional, optional)
+missing module named AppKit - imported by screeninfo.enumerators.osx (delayed), pyperclip (delayed, conditional, optional)
 missing module named Foundation - imported by pyperclip (delayed, conditional, optional)
 missing module named PyQt5 - imported by pyperclip (delayed, conditional, optional)
 missing module named qtpy - imported by pyperclip (delayed, conditional, optional)

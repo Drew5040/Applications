@@ -2,7 +2,7 @@ from tkinter import ttk
 
 
 # Initialize 'style' & set background color for frames & labels
-def style_gui(app):
+def style_gui(app) -> None:
     # Create style object for the application
     app.style = ttk.Style()
 

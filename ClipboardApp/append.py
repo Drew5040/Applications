@@ -1,17 +1,17 @@
 from os import path
 from logging import info, warning, debug, error
 from traceback import format_exc
-from time import sleep
 from datetime import datetime
-from states import save_current_state
-from tkinter import messagebox, END
+from typing import List, Union
+from states import save_current_state, update_button_states
+from tkinter import messagebox, END, DISABLED
 
 
 # Initialize file
-def initialize_file(filepath):
+def initialize_file(filepath: str) -> List[str]:
     # Check if 'filepath' exists & initialize if not
     if not path.exists(filepath):
-        # Define 'initial_state' with headers
+        # Define 'initial_state' of file with headers
         initial_state = ["\nAPPROVALS\n\n\n", "NEW_MASTERS\n\n\n", "SPLIT\n\n\n", "MERGE\n\n\n", "NOTES\n\n"]
 
         # Open 'filepath' & write 'initial_state' to file
@@ -26,14 +26,14 @@ def initialize_file(filepath):
             return file.readlines()
 
 
-# Grab, check, strip, & append 'new_master_id' to file
-def append_new_master_id(app):
+# Grab, check, strip, & append 'new_master_id' entry
+def append_new_master_id(app) -> None:
     # Get 'new_master_id' from entry field & strip whitespace
     app.new_master_id = app.new_master_id_entry.get().strip()
 
-    # Check if 'new_master_id' is empty & show warning if needed
+    # Check if 'new_master_id' entry box is empty & show warning if needed
     if not app.new_master_id:
-        messagebox.showwarning("No new Master ID", "Please enter a new Master ID")
+        messagebox.showwarning(title="No new Master ID", message="Please enter a new Master ID")
         warning("No new Master ID entered")
     else:
         # Append 'new_master_id' to file under 'NEW_MASTERS' section
@@ -46,14 +46,14 @@ def append_new_master_id(app):
         info(f"New Master ID recorded: {app.new_master_id}")
 
 
-# Grab, check, strip, & append 'split_candidate' to file, then clear entry
-def append_split_candidate(app):
+# Grab, check, strip, & append 'split_candidate' entry to file, then clear entry box
+def append_split_candidate(app) -> None:
     # Get 'split_candidate' from entry field & strip whitespace
     app.split_candidate = app.split_candidate_entry.get().strip()
 
     # Check if 'split_candidate' is empty & show warning if needed
     if not app.split_candidate:
-        messagebox.showwarning("No new Split Candidate", "Please enter a new Split Candidate")
+        messagebox.showwarning(title="No new Split Candidate", message="Please enter a new Split Candidate")
         warning("No new Split Candidate entered")
     else:
         # Append 'split_candidate' to file under 'SPLIT' section
@@ -66,14 +66,14 @@ def append_split_candidate(app):
         info(f"New Split Candidate recorded: {app.split_candidate}")
 
 
-# Grab, check, strip, & append 'merge_candidate' to file, then clear entry
-def append_merge_candidate(app):
+# Grab, check, strip, & append 'merge_candidate' entry to file, then clear entry
+def append_merge_candidate(app) -> None:
     # Get 'merge_candidate' from entry field & strip whitespace
     app.merge_candidate = app.merge_candidate_entry.get().strip()
 
     # Check if 'merge_candidate' is empty & show warning if needed
     if not app.merge_candidate:
-        messagebox.showwarning("No new Merge Candidate", "Please enter a new Merge Candidate")
+        messagebox.showwarning(title="No new Merge Candidate", message="Please enter a new Merge Candidate")
         warning("No new Merge Candidate entered")
     else:
         # Append 'merge_candidate' to file under 'MERGE' section
@@ -86,8 +86,24 @@ def append_merge_candidate(app):
         info(f"New Merge Candidate recorded: {app.merge_candidate}")
 
 
-# Grab, check, strip, & append 'notes' to file. Then clear entry
-def append_note(app):
+def append_duplicate_entry(app) -> None:
+    # Check if 'master_id' is empty & show warning if needed
+    if not app.master_id:
+        messagebox.showwarning(title="No Master ID Warning", message="Please enter a Master ID.")
+        warning("No Master ID entered")
+    elif app.last_processed_entry is None:
+        messagebox.showwarning(title="Duplicates", message="You can only duplicate entries once.")
+    else:
+        # Append the last processed entry to the file again
+        app.append_to_file(text=app.last_processed_entry, section="APPROVALS")
+        info(f"Duplicated entry: {app.last_processed_entry}")
+
+        # Reset 'last_processed_entry'
+        app.last_processed_entry = None
+
+
+# Grab, check, strip, & append 'notes' entry to file. Then clear entry
+def append_note(app) -> None:
     # Get notes from the 'note_display' Text widget
     notes = app.note_display.get("1.0", END).strip()
 
@@ -107,7 +123,7 @@ def append_note(app):
 
 
 # Initialize file & append processed ID's under their appropriate headers
-def append_to_file(app, text, section):
+def append_to_file(app, text: str, section: str) -> None:
     # Create file name
     current_time = datetime.now()
     formatted_time = current_time.strftime("%Y.%m.%d")
@@ -130,7 +146,7 @@ def append_to_file(app, text, section):
             # Read & process file contents
             lines = file.readlines()
 
-            # Find correct index to insert ID under headers
+            # Find line index to insert processed IDs under correct headers
             if section == "APPROVALS":
                 section_index = lines.index("APPROVALS\n") + 2
                 while not lines[section_index].startswith("NEW_MASTERS"):
@@ -176,9 +192,10 @@ def append_to_file(app, text, section):
     except (OSError, IOError) as e:
         error(f"An exception occurred while appending to the file: {e}")
         error(format_exc())
+
     except Exception as e:
         error(f"An unexpected exception occurred while appending to the file: {e}")
         error(format_exc())
 
     # Update button states after appending
-    app.update_button_states()
+    update_button_states(app)
