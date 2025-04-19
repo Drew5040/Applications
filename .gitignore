@@ -1,0 +1,74 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore Python-specific files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyo
+*.pyc
+
+# Ignore virtual environments
+.venv/
+venv/
+env/
+*.env
+.env/
+
+# Ignore IDE-specific files
+.idea/
+.vscode/
+
+# Ignore logs and databases
+*.log
+*.sql
+*.sqlite
+*.sqlite3
+db.sqlite*
+
+# Ignore compiled files
+*.class
+*.jar
+*.war
+*.ear
+*.hprof
+*.min.js
+*.min.css
+*.gz
+
+# Ignore build/compiled directories
+bin/
+build/
+dist/
+out/
+target/
+
+# Ignore Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Ignore compiled LaTeX files
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.pdf
+
+# Ignore images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.svg
+
+# Ignore miscellaneous files
+*.bak
+*.swp
+*.tmp
+
+# Ignore backup files
+*~
+#*#
